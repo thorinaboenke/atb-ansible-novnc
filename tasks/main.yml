@@ -17,6 +17,16 @@
     - install
     - service
 
+- name: Configure user-specific x11vnc service
+  ansible.builtin.template:
+    src: x11vnc-user.j2
+    dest: "/etc/systemd/system/x11vnc-user.service"
+    mode: '0644'
+  when: create_user_session
+  tags:
+    - install
+    - service
+
 - name: Configure websockify service
   ansible.builtin.template:
     src: websockify.j2
@@ -26,11 +36,57 @@
     - install
     - service
 
+- name: Create .vnc directory
+  ansible.builtin.file:
+    path: "/home/{{ vnc_user }}/.vnc"
+    state: directory
+    owner: "{{ vnc_user }}"
+    group: "{{ vnc_user }}"
+    mode: '0755'
+  when: create_user_session
+
+- name: Set VNC password for VNC user
+  ansible.builtin.shell: |
+    set -o pipefail
+    echo {{ vnc_password }} | vncpasswd -f > /home/{{ vnc_user }}/.vnc/passwd
+  args:
+    executable: /bin/bash
+    creates: /home/{{ vnc_user }}/.vnc/passwd
+  when: create_user_session
+
+- name: Set correct permissions for VNC passwd file
+  ansible.builtin.file:
+    path: /home/{{ vnc_user }}/.vnc/passwd
+    owner: "{{ vnc_user }}"
+    group: "{{ vnc_user }}"
+    mode: 0600
+  when: create_user_session
+
+
+- name: Create xsession file to start Mate Terminal in user session
+  copy:
+    dest: "/home/{{ vnc_user }}/.xsession"
+    content: |
+      #!/bin/bash
+      mate-terminal &
+    owner: "{{ vnc_user }}"
+    group: "{{ vnc_user }}"
+    mode: '0755'
+  when: create_user_session
+
+
 - name: Enable service x11vnc
   ansible.builtin.service:
     name: x11vnc
     enabled: yes
     state: restarted
+
+- name: Enable user-specific x11vnc service
+  ansible.builtin.service:
+    name: x11vnc-user
+    enabled: yes
+    state: restarted
+  when: create_user_session
 
 - name: Enable service websockify
   ansible.builtin.service:

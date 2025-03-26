@@ -4,3 +4,6 @@ novnc_packages:
   - websockify
   - x11vnc
   - novnc
+create_user_session: false
+vnc_user: ""
+vnc_password: ""
