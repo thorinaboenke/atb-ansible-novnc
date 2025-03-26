@@ -2,6 +2,7 @@ Ansible role to install NoVNC
 =============================
 
 This role installs novnc with x11vnc and websockify.
+Optionally a user specific x11vnc session can be started on Display :1 with create_user_session = true.
 
 Requirements
 ------------
@@ -16,6 +17,9 @@ novnc_packages:
   - websockify
   - x11vnc
   - novnc
+create_user_session: false
+vnc_user: ""
+vnc_password: ""
 ```
 
 Dependencies
